@@ -1,0 +1,169 @@
+!!!Что надо поправить в стендах
+1. Установить графику на HQ-CLI
+2. Снести IP с HQ-SRV
+3. Установить везде sudo
+4. Установить ssh на hq-srv и br-srv
+5. Почистить историю
+
+
+
+
+1. настройка хостнеймов:
+
+hostname HQ-RTR.au-team.irpo
+hostname BR-RTR.au-team.irpo
+hostnamectl hostname ISP
+hostnamectl hostname hq-sw.au-team.irpo
+hostnamectl hostname hq-srv.au-team.irpo
+hostnamectl hostname hq-cli.au-team.irpo
+hostnamectl hostname br-srv.au-team.irpo
+
+Рассчет IP адресов (табличку можно чисто)
+
+2. Настройка  ISP
+
+редактирование файла /etc/sysctl.conf (скрин)
+sysctl -p
+
+отредачить чтобы ens18 получал по dhcp (скрин)
+после отредачить для 4.0 и 5.0
+
+apt install iptables -y
+iptables -t nat -A POSTROUTING -o ens18 -j MASQUERADE
+apt install iptables-persistent -y
+iptables-save > /etc/iptables/rules.v4
+
+3. Создание локальных учетных записей
+
+HQ-SRV + BR-SRV:
+	useradd -m -u 1010 sshuser 
+	echo 'sshuser ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/sshuser
+
+	Проверка: 
+		su - sshuser
+		sudo whoami
+
+
+HQ-RTR + BR-RTR:
+	en
+	conf t
+	username net_admin
+	password P@ssw0rd
+	role admin
+	activate
+
+Проверка: 
+	?
+
+
+4. Настройка виртуального коммутатора
+
+HQ-SW:
+	сделать interfaces (скрин)
+
+	ovs-vsctl add-br ovs0
+	ovs-vsctl add-port ens18 trunk=100,200,999
+	ovs-vsctl add-port ens19 tag=100
+	ovs-vsctl add-port ens20 tag=200
+	ovs-vsctl set port ovs0 tag=999
+	systemctl restart networking openvswitch-switch
+
+
+
+HQ-RTR:
+	en
+	  conf t
+	  interface ge1.100
+		description "vlan100"
+		ip address 192.168.100.1/26
+	  exit
+	  interface ge1.200
+		description "vlan200"
+		ip address 192.168.200.1/28
+	  exit
+	  interface ge1.999
+		description "vlan999"
+		ip address 192.168.99.1/29
+	  exit
+
+	port ge1
+	  service-instance ge1/ge1.999
+	  	encapsulation dot1q 999 exact
+	  	rewrite pop 1
+	  	connect ip interface ge1.999
+	  	exit
+	  service-instance ge1/ge1.200
+	  	encapsulation dot1q 200 exact
+	  	rewrite pop 1
+	  	connect ip interface ge1.200
+	  	exit
+	  service-instance ge1/ge1.100
+	  	encapsulation dot1q 100 exact
+	  	rewrite pop 1
+		connect ip interface ge1.100
+		exit
+
+
+5. Настройка безопасного удаленного доступа 
+на HQ-SRV и BR-SRV:
+	cp /etc/ssh/sshd_config{,.bak}
+	nano /etc/sshd_config
+	изменяем следующие параметры:
+		1. Port 2024
+		2. MaxAuthTries 2
+		3. AllowUsers sshuser
+		4. Banner /etc/ssh/banner/
+
+В баннер добавляем следующее содержимое:
+******************************************************
+*                     WARNING!                       *
+*                                                    *
+*           Access only authorized users!            *
+*                                                    *
+*  If you not authorized user, close this session!   *
+*                                                    *
+******************************************************
+
+	systemctl restart sshd (или ssh проверить надо)
+
+6. Между офисами HQ и BR необходимо сконфигурировать ip туннель
+
+HQ-RTR:
+	interface tunnel.0
+	ip address 10.0.0.1/30
+	ip mtu 1400
+	ip tunnel 172.16.4.2 172.16.5.2 mode gre
+
+BR-RTR:
+	interface tunnel.0
+	ip address 10.0.0.2/30
+	ip mtu 1400
+	ip tunnel 172.16.5.2 172.16.4.2 mode gre
+
+Сказать про IP IP
+
+7. Динамическая маршрутизация (ТОЛЬКО ТУННЕЛЬ!).
+
+взять из готовой конфиги
+
+8. NAT на HQ-BR-RTR
+
+HQ-RTR:
+	en
+	  conf t
+	  interface ge1.100
+	    ip nat inside
+	    exit
+	  interface ge1.200
+	    ip nat inside
+	    exit
+	  interface ge1.999
+	    ip nat inside
+	  !
+	  interface int0
+	    ip nat outside
+	  !
+
+
+
+
