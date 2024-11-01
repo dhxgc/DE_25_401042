@@ -13,8 +13,35 @@ apt install bind9 -y
 ```
 Редактируем файл `/etc/bind/named.conf.options`
 Файл должен выглядеть следующим образом:
-![[Pasted image 20241031221924.png]]
-Все, что выделено белым - добавили мы. `//` - просто комментарий.
+```
+options {
+        directory "/var/cache/bind";
+
+        // If there is a firewall between you and nameservers you want
+        // to talk to, you may need to fix the firewall to allow multiple
+        // ports to talk.  See http://www.kb.cert.org/vuls/id/800113
+
+        // If your ISP provided one or more IP addresses for stable
+        // nameservers, you probably want to use them as forwarders.
+        // Uncomment the following block, and insert the addresses replacing
+        // the all-0's placeholder.
+        listen-on { any; };
+        recursion yes;
+        allow-query { any; };
+        forwarders {
+                77.88.8.8;
+        };
+
+        //========================================================================
+        // If BIND logs error messages about the root key being expired,
+        // you will need to update your keys.  See https://www.isc.org/bind-keys
+        //========================================================================
+        dnssec-validation auto;
+
+        listen-on-v6 { any; };
+};
+```
+Все строчки, что описаны ниже - добавляем внутрь `options`. `//` - просто комментарий.
 
 >- **listen-on { any; };**: Этот параметр определяет адреса и порты, на которых DNS-сервер будет слушать запросы. Значение any означает, что сервер будет прослушивать запросы на всех доступных интерфейсах и IP-адресах.
 >- **recursion yes;**: Устанавливает, разрешено ли серверу делать рекурсивные запросы. Рекурсивные запросы возникают, когда DNS-сервер запрашивает другие серверы и выполняет несколько итераций поиска до тех пор, пока не получит окончательный ответ.
@@ -49,18 +76,18 @@ rtt min/avg/max/mdev = 24.587/24.670/24.736/0.062 ms
 ```
 zone "au-team.irpo" {
         type master;
-        file "/etc/bind/au-team.db";
-}
+        file "/etc/bind/db.au-team.irpo";
+};
 ```
 
 Создаем файл с настройками прямой зоны и выставляем нужные права:
 ```bash
-touch /etc/bind/au-team.db
-chown bind:bind /etc/bind/au-team.db
-chmod 600 /etc/bind/au-team.db
+touch /etc/bind/db.au-team.irpo
+chown bind:bind /etc/bind/db.au-team.irpo
+chmod 600 /etc/bind/db.au-team.irpo
 ```
 
-Шаблоны доступны на сайте [официальной документации.](https://wiki.debian.org/Bind9) Мы берем следующее содержимое и вставляем в файл `au-team.db`:
+Шаблоны доступны на сайте [официальной документации.](https://wiki.debian.org/Bind9) Мы берем следующее содержимое и вставляем в файл `db.au-team.irpo`:
 
 ![[Pasted image 20241101000406.png]]
 
@@ -69,23 +96,23 @@ chmod 600 /etc/bind/au-team.db
 ```
 zone "100.168.192.in-addr.arpa" {
         type master;
-        file "/etc/bind/au-team100rev.db";
-}
+        file "/etc/bind/db.au-team.irpo-rev1";
+};
 
 zone "200.168.192.in-addr.arpa" {
         type master;
-        file "/etc/bind/au-team200rev.db";
-}
+        file "/etc/bind/db.au-team.irpo-rev2";
+};
 ```
 
 Создаем файлы, выдаем права:
 ```bash
-touch /etc/bind/au-team{100,200}rev.db
-chown bind:bind /etc/bind/au-team{100,200}rev.db
-chmod 600 /etc/bind/au-team{100,200}rev.db
+touch /etc/bind/db.au-team.irpo-rev{1,2}
+chown bind:bind /etc/bind/db.au-team.irpo-rev{1,2}
+chmod 600 /etc/bind/au-team{1,2}rev.db
 ```
 
-#### `/etc/bind/au-team100rev.db`:
+#### `/etc/bind/db.au-team.irpo-rev1`:
 
 ```
 $TTL    1D
@@ -101,7 +128,7 @@ $TTL    1D
 10      IN      PTR     hq-srv.au-team.irpo.
 ```
 
-#### `/etc/bind/au-team200rev.db`:
+#### `/etc/bind/db.au-team.irpo-rev2`:
 
 ```
 $TTL    1D
