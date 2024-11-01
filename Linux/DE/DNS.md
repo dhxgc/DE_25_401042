@@ -7,7 +7,10 @@
 ```
 nameserver 8.8.8.8
 ```
-
+После скачиваем DNS-сервер BIND:
+```
+apt install bind9 -y
+```
 Редактируем файл `/etc/bind/named.conf.options`
 Файл должен выглядеть следующим образом:
 ![[Pasted image 20241031221924.png]]
