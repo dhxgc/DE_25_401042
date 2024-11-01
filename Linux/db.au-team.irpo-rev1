@@ -1,0 +1,15 @@
+$TTL    86400
+@       IN      SOA     au-team.irpo. admin.au-team.irpo. (
+                        2023103101 ; Serial
+                        3600       ; Refresh
+                        1800       ; Retry
+                        604800     ; Expire
+                        86400      ; Negative Cache TTL
+)
+
+; NS Records
+@       IN      NS      au-team.irpo.
+
+; PTR Records
+1       IN      PTR     hq-rtr.au-team.irpo.
+10      IN      PTR     hq-srv.au-team.irpo.
