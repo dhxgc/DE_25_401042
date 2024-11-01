@@ -1,6 +1,13 @@
 ## DNS
 
 ---
+
+Временно выставляем другой DNS-server на HQ-SRV, удялаем предыдущие строки.
+`/etc/resolv.conf`:
+```
+nameserver 8.8.8.8
+```
+
 Редактируем файл `/etc/bind/named.conf.options`
 Файл должен выглядеть следующим образом:
 ![[Pasted image 20241031221924.png]]
