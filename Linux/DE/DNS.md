@@ -86,12 +86,7 @@ touch /etc/bind/db.au-team.irpo
 chown bind:bind /etc/bind/db.au-team.irpo
 chmod 600 /etc/bind/db.au-team.irpo
 ```
-
-Шаблоны доступны на сайте [официальной документации.](https://wiki.debian.org/Bind9) Мы берем следующее содержимое и вставляем в файл `db.au-team.irpo`:
-
-![[Pasted image 20241101000406.png]]
-
-После прописываем обратные зоны - их 3, также в файле `/etc/bind/named.conf.local`
+Прописываем в файле `/etc/bind/named.conf.local` обратные зоны - их 2.
 
 ```
 zone "100.168.192.in-addr.arpa" {
@@ -112,7 +107,7 @@ chown bind:bind /etc/bind/db.au-team.irpo-rev{1,2}
 chmod 600 /etc/bind/au-team{1,2}rev.db
 ```
 
-#### `/etc/bind/db.au-team.irpo-rev1`:
+#### Приводим `/etc/bind/db.au-team.irpo-rev1` к виду:
 
 ```
 $TTL    1D
@@ -128,7 +123,7 @@ $TTL    1D
 10      IN      PTR     hq-srv.au-team.irpo.
 ```
 
-#### `/etc/bind/db.au-team.irpo-rev2`:
+#### Приводим `/etc/bind/db.au-team.irpo-rev2` к виду:
 
 ```
 $TTL    1D
